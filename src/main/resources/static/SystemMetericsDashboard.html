@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>System Metrics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 40px;
+        }
+
+        .meter-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+        }
+
+        .meter-box {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📊 System Monitoring Dashboard (Meters)</h1>
+
+<div class="meter-container">
+    <div class="meter-box">
+        <h3>CPU Usage</h3>
+        <canvas id="cpuMeter" width="300" height="150"></canvas>
+        <h2 id="cpuText">CPU Used: 0%</h2>
+    </div>
+    <div class="meter-box">
+        <h3>Memory Usage</h3>
+        <canvas id="memoryMeter" width="300" height="150"></canvas>
+        <h2 id="memoryText">Memory Used: 0%</h2>
+    </div>
+</div>
+
+<script>
+    const TOTAL_MEMORY_GB = 12;
+
+    const cpuMeter = new Chart(document.getElementById('cpuMeter'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#ff4d4d', '#e0e0e0'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            rotation: -Math.PI,
+            circumference: Math.PI,
+            cutout: '70%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+
+    const memoryMeter = new Chart(document.getElementById('memoryMeter'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#4d79ff', '#e0e0e0'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            rotation: -Math.PI,
+            circumference: Math.PI,
+            cutout: '70%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+
+    async function fetchData() {
+        try {
+            const res = await fetch('/metrics/latest');
+            const data = await res.json();
+
+            const cpuUsed = data.cpuLoad * 100;
+            const memFreeGB = data.memoryAvailable / (1024 * 1024 * 1024);
+            const memUsedPercent = ((TOTAL_MEMORY_GB - memFreeGB) / TOTAL_MEMORY_GB) * 100;
+
+            // Update CPU
+            cpuMeter.data.datasets[0].data[0] = cpuUsed.toFixed(2);
+            cpuMeter.data.datasets[0].data[1] = (100 - cpuUsed).toFixed(2);
+            cpuMeter.update();
+            document.getElementById('cpuText').textContent = `CPU Used: ${cpuUsed.toFixed(2)}%`;
+
+            // Update Memory
+            memoryMeter.data.datasets[0].data[0] = memUsedPercent.toFixed(2);
+            memoryMeter.data.datasets[0].data[1] = (100 - memUsedPercent).toFixed(2);
+            memoryMeter.update();
+            document.getElementById('memoryText').textContent = `Memory Used: ${memUsedPercent.toFixed(2)}%`;
+
+        } catch (err) {
+            console.error("Error fetching metrics:", err);
+        }
+    }
+
+    setInterval(fetchData, 2000);
+    fetchData(); // Initial call
+</script>
+
+</body>
+</html>

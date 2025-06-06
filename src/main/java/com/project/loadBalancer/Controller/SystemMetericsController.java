@@ -18,7 +18,7 @@ public class SystemMetericsController {
     }
 
     @GetMapping("/metrics/cpu")
-    public String getCpuLoad() {
+    public double getCpuLoad() {
         long[] prevTicks = processor.getSystemCpuLoadTicks();
         try {
             Thread.sleep(1000);
@@ -27,14 +27,16 @@ public class SystemMetericsController {
         }
         long[] ticks = processor.getSystemCpuLoadTicks();
        double load= processor.getSystemCpuLoadBetweenTicks(prevTicks);
-       return (String.format("%.2f", load*100))+"%";
+//       return (String.format("%.2f", load*100))+"%";
+            return load;
     }
 
     @GetMapping("/metrics/memory")
-    public String getMemoryUsage() {
+    public double getMemoryUsage() {
         GlobalMemory memory = systemInfo.getHardware().getMemory();
         long total = memory.getTotal();
         long available = memory.getAvailable();
-        return String.format("Memory Used: %.2f%%", ((double)(total - available) / total) * 100);
+//        return String.format("Memory Used: %.2f%%", ((double)(total - available) / total) * 100);
+        return (double)available;
     }
 }
